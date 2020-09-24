@@ -6,24 +6,30 @@ An implementation of the training pipeline of AlphaZero for Gomoku
 """
 
 from __future__ import print_function
+
 import random
-import numpy as np
 from collections import defaultdict, deque
+
+import numpy as np
+import tensorflow.keras.backend as K
+from tqdm import tqdm
+
 from game import Board, Game
 from mcts_pure import MCTSPlayer as MCTS_Pure
 from mcts_alphaZero import MCTSPlayer
-from policy_value_net import PolicyValueNet  # Theano and Lasagne
+# from policy_value_net import PolicyValueNet  # Theano and Lasagne
 # from policy_value_net_pytorch import PolicyValueNet  # Pytorch
 # from policy_value_net_tensorflow import PolicyValueNet # Tensorflow
 # from policy_value_net_keras import PolicyValueNet # Keras
+from policy_value_net_tf2 import PolicyValueNet # Tensorflow2
 
 
 class TrainPipeline():
     def __init__(self, init_model=None):
         # params of the board and the game
-        self.board_width = 6
-        self.board_height = 6
-        self.n_in_row = 4
+        self.board_width = 3
+        self.board_height = 3
+        self.n_in_row = 3
         self.board = Board(width=self.board_width,
                            height=self.board_height,
                            n_in_row=self.n_in_row)
@@ -65,12 +71,13 @@ class TrainPipeline():
         play_data: [(state, mcts_prob, winner_z), ..., ...]
         """
         extend_data = []
-        for state, mcts_porb, winner in play_data:
+        print(play_data[0])
+        for state, mcts_prob, winner in play_data:
             for i in [1, 2, 3, 4]:
                 # rotate counterclockwise
                 equi_state = np.array([np.rot90(s, i) for s in state])
                 equi_mcts_prob = np.rot90(np.flipud(
-                    mcts_porb.reshape(self.board_height, self.board_width)), i)
+                    mcts_prob.reshape(self.board_height, self.board_width)), i)
                 extend_data.append((equi_state,
                                     np.flipud(equi_mcts_prob).flatten(),
                                     winner))
@@ -120,10 +127,10 @@ class TrainPipeline():
             self.lr_multiplier *= 1.5
 
         explained_var_old = (1 -
-                             np.var(np.array(winner_batch) - old_v.flatten()) /
+                             np.var(np.array(winner_batch) - K.flatten(old_v)) /
                              np.var(np.array(winner_batch)))
         explained_var_new = (1 -
-                             np.var(np.array(winner_batch) - new_v.flatten()) /
+                             np.var(np.array(winner_batch) - K.flatten(new_v)) /
                              np.var(np.array(winner_batch)))
         print(("kl:{:.5f},"
                "lr_multiplier:{:.3f},"
@@ -165,7 +172,7 @@ class TrainPipeline():
     def run(self):
         """run the training pipeline"""
         try:
-            for i in range(self.game_batch_num):
+            for i in tqdm(range(self.game_batch_num)):
                 self.collect_selfplay_data(self.play_batch_size)
                 print("batch i:{}, episode_len:{}".format(
                         i+1, self.episode_len))

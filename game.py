@@ -57,7 +57,7 @@ class Board(object):
         """return the board state from the perspective of the current player.
         state shape: 4*width*height
         """
-
+        # TODO: 1-当前棋手的落子 2-对手的落子 3-对手的最后一子 4 当前棋手是否先手
         square_state = np.zeros((4, self.width, self.height))
         if self.states:
             moves, players = np.array(list(zip(*self.states.items())))
@@ -72,6 +72,9 @@ class Board(object):
                             self.last_move % self.height] = 1.0
         if len(self.states) % 2 == 0:
             square_state[3][:, :] = 1.0  # indicate the colour to play
+        # TODO: reverse the board before return
+        # 目前state(ndarray)的原点是top-left，而棋盘的原点bottom-left
+        # 因此为了正确表示落子，将state上下翻转
         return square_state[:, ::-1, :]
 
     def do_move(self, move):
@@ -98,18 +101,22 @@ class Board(object):
             w = m % width
             player = states[m]
 
+            # TODO: 判断右
             if (w in range(width - n + 1) and
                     len(set(states.get(i, -1) for i in range(m, m + n))) == 1):
                 return True, player
 
+            # TODO: 判断上
             if (h in range(height - n + 1) and
                     len(set(states.get(i, -1) for i in range(m, m + n * width, width))) == 1):
                 return True, player
 
+            # TODO: 判断右上
             if (w in range(width - n + 1) and h in range(height - n + 1) and
                     len(set(states.get(i, -1) for i in range(m, m + n * (width + 1), width + 1))) == 1):
                 return True, player
 
+            # TODO: 判断左上
             if (w in range(n - 1, width) and h in range(height - n + 1) and
                     len(set(states.get(i, -1) for i in range(m, m + n * (width - 1), width - 1))) == 1):
                 return True, player

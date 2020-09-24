@@ -70,6 +70,10 @@ class TreeNode(object):
         """
         # If it is not root, this node's parent should be updated first.
         if self._parent:
+            # TODO:
+            # leaf_value是从leaf节点的视角考虑的，leaf value传入后是用来更新Q value的，
+            # 而leaf节点的Q value是给它的父节点(对手)选择分支的时候用的，所以这个Q value是从父节点的视角出发的，
+            # 所以leaf节点自身的leaf value和自身的Q value就是从相反的视角考虑的，所以传入时就加了负号
             self._parent.update_recursive(-leaf_value)
         self.update(leaf_value)
 

@@ -11,6 +11,7 @@ import copy
 
 
 def softmax(x):
+    # TODO: 与正常softmax计算是等价的，减去最大值是为了数值计算的稳定性
     probs = np.exp(x - np.max(x))
     probs /= np.sum(probs)
     return probs
@@ -192,6 +193,7 @@ class MCTSPlayer(object):
             if self._is_selfplay:
                 # add Dirichlet Noise for exploration (needed for
                 # self-play training)
+                # TODO：Dirichlet参数一般和每一步可能的动作数成反，这里的0.3源于五子棋每步最多几十个选择，
                 move = np.random.choice(
                     acts,
                     p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs)))
